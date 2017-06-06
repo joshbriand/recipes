@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Recipe Index</title>
+		<meta charset="UTF-8">
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
+		</script>
+		<script src="//apis.google.com/js/platform.js?onload=start">
+		</script>
+		<link href='http://fonts.googleapis.com/css?family=Roboto:400,300,700' rel='stylesheet' type='text/css'>
+		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+	</head>
+	<body>
+		<!-- GOOGLE PLUS SIGN IN-->
+		<div id="header" class="container">
+			<div class="row">
+				<div id="navigation" class="col-md-1">
+					<a href="{{ url_for('showRecipes') }}">All Recipes</a>
+				</div>
+				{% if 'username' in session %}
+					<div id="navigation" class="col-md-1">
+						<a href="{{ url_for('showRecipes') }}">My Recipes</a>
+						<!--Josh add get param-->
+					</div>
+					<div id="navigation" class="col-md-1">
+						<a href="{{ url_for('addRecipe') }}">Add Recipe</a>
+					</div>
+					<div class="col-md-2">
+					</div>
+				{% else %}
+					<div class="col-md-4">
+					</div>
+				{% endif %}
+				<div class="flash col-md-5">
+					{% with messages = get_flashed_messages() %}
+						{% if messages %}
+							<ul>
+				    	{% for message in messages %}
+				      	<li> <strong> {{ message }} </strong> </li>
+				    	{% endfor %}
+				      </ul>
+				    {% endif %}
+				  {% endwith %}
+				</div>
+				<div id="login" class="col-md-2">
+					{% if 'username' not in session %}
+						<span class="g-signin"
+							data-scope="openid email"
+							data-clientid="548267792426-7ooh9dcavn8p2bfs0g81r4mgktj04573.apps.googleusercontent.com"
+							data-redirecturi="postmessage"
+							data-accesstype="offline"
+							data-cookiepolicy="single_host_origin"
+							data-callback="signInCallback"
+							data-approvalprompt="force">
+						</span>
+						<script>
+						function signInCallback(authResult) {
+							if (authResult['code']) {
+								$('#signinButton').attr('style', 'display: none');
+								$.ajax({
+									type: 'POST',
+									url: '/gconnect?state={{STATE}}',
+									processData: false,
+									data: authResult['code'],
+									contentType: 'application/octet-stream; charset=utf-8',
+									success: function(result) {
+										if (result) {
+											$('#result').html('Login Successful!</br>'+ result + '</br>Redirecting...')
+										 setTimeout(function() {
+											window.location.href = "/recipes";
+										}, 0);
+									} else if (authResult['error']) {
+								console.log('There was an error: ' + authResult['error']);
+							} else {
+										$('#result').html('Failed to make a server-side call. Check your configuration and console.');
+										}
+									}
+							}); } }
+						</script>
+					{% else %}
+						Logged in as {{ session['username']}}
+						<br>
+						<a href="{{ url_for('disconnect') }}">Log Out</a>
+					{% endif %}
+				</div>
+			</div>
+		</div>
+		<div id="result"></div>
+
+		<!--END GOOGLE PLUS SIGN IN -->
+		<div id="status">
+		</div>
+		<div class="container">
+			{% block content %}
+			{% endblock %}
+		</div>
+	</body>
+</html>
+<!--
+<div class = 'flash'>
+		      {% with messages = get_flashed_messages() %}
+      {% if messages %}
+
+        <ul>
+        {% for message in messages %}
+            <li> <strong> {{ message }} </strong> </li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+    {% endwith %}
+
+</div>
+-->

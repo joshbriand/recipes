@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+	<div class="container">
+		<div class="row text-center">
+			<div class="col-md-3">
+				<img src="{{ recipe.picture }}">
+			</div>
+			<div class="col-md-6">
+				<h1>{{ recipe.name }}</h1>
+			</div>
+		</div>
+		<div class="row text-center">
+			# Likes
+		</div>
+		<div class="row text-center">
+			<h2>{{ recipe.cuisine }} - {{ recipe.meal }}</h2>
+		</div>
+		<div class="row text-center">
+			<a href="{{ url_for('editRecipe') }}">Edit</a>
+			<a href="{{ url_for('deleteRecipe', recipe_id=recipe.id) }}">Delete</a>
+			<a href="">Like</a>
+		</div>
+		<hr>
+		<div class="row">
+			<div id="ingredients" class="col-md-4">
+				<h3 class="text-center">Ingredients</h3>
+				<ul>
+					{% for ingredient in ingredients %}
+						<li>{{ ingredient.ingredient }}</li>
+					{% endfor %}
+				</ul>
+			</div>
+			<div id="method" class="col-md-8">
+				<h3 class="text-center">Method</h3>
+				<ol>
+					{% for process in processes %}
+						<li>{{ process.process }}</li>
+					{% endfor %}
+				</ol>
+			</div>
+		</div>
+		<hr>
+		<div class="row text-center">
+			<h2>Comments</h2>
+		</div>
+		<div class="row text-center">
+			<a href="{{ url_for('addComment') }}">
+				Add a Comment
+			</a>
+		</div>
+		<br>
+		<div id="comments" class="row">
+			<div id="user" class="col-md-2">
+				Username
+			</div>
+			<div id="comment" class="col-md-10">
+				Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+			</div>
+		</div>
+	</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block content %}
+	<div class="container text-center">
+		<div class="row">
+			<h1>Recipes</h1>
+		</div>
+		<br>
+		<div class="row">
+			<form>
+				<div class="col-md-3">
+					Cuisine:
+					<select name="cuisine">
+						<option value="All">All</option>
+						<option value="American">American</option>
+						<option value="German">German</option>
+						<option value="Indian">Indian</option>
+						<option value="Mexican">Mexican</option>
+						<option value="Middle Eastern">Middle Eastern</option>
+						<option value="Vegan">Vegan</option>
+					</select>
+				</div>
+				<div class="col-md-3">
+					Meal:
+					<select name="meal">
+						<option value="All">All</option>
+						<option value="Appetizer">Appetizer</option>
+						<option value="Breakfast">Breakfast</option>
+						<option value="Dessert">Dessert</option>
+						<option value="Dinner">Dinner</option>
+						<option value="Drink">Drink</option>
+						<option value="Lunch">Lunch</option>
+						<option value="Salad">Salad</option>
+						<option value="Side">Side</option>
+						<option value="Snack">Snack</option>
+					</select>
+				</div>
+				<div class="col-md-3">
+					Order By:
+					<select name="order">
+						<option value="Newest">Newest First</option>
+						<option value="Oldest">Oldest First</option>
+						<option value="Popular">Most Popular First</option>
+						<option value="Alphabetically by Name">Alphabetically by Name</option>
+						<option value="Alphabetically by Creator">Alphabetically by Creator</option>
+					</select>
+				</div>
+				<div class="col-md-3">
+					User:
+					<select name="user">
+						<option value="All">All</option>
+						{% for user in users %}
+							<option value="{{ user.name }}">{{ user.name }}</option>
+						{% endfor %}
+					</select>
+				</div>
+			</div>
+			<br>
+			<div class="row">
+				<input type="submit" value="Refresh">
+			</div>
+		</form>
+		<hr>
+		<div class="recipes">
+			<div class="row">
+				<div class="col-md-4 recipe">
+					<a href="{{ url_for('showRecipe', recipe_id=1) }}">
+						<img src="http://via.placeholder.com/200x200">
+						<br>
+						First
+					</a>
+				</div>
+				<div class="col-md-4 recipe">
+					<img src="http://via.placeholder.com/200x200">
+					<br>
+					Second
+				</div>
+				<div class="col-md-4 recipe">
+					<img src="http://via.placeholder.com/200x200">
+					<br>
+					Third
+				</div>
+			</div>
+			<br>
+			<div class="row">
+				<div class="col-md-4 recipe">
+					<img src="http://via.placeholder.com/200x200">
+					<br>
+					Fourth
+				</div>
+				<div class="col-md-4 recipe">
+					<img src="http://via.placeholder.com/200x200">
+					<br>
+					Fifth
+				</div>
+				<div class="col-md-4 recipe">
+					<img src="http://via.placeholder.com/200x200">
+					<br>
+					Sixth
+				</div>
+			</div>
+			<br>
+			<div class="row">
+				<div class="col-md-4 recipe">
+					<img src="http://via.placeholder.com/200x200">
+					<br>
+					Seventh
+				</div>
+				<div class="col-md-4 recipe">
+					<img src="http://via.placeholder.com/200x200">
+					<br>
+					Eighth
+				</div>
+				<div class="col-md-4 recipe">
+					<img src="http://via.placeholder.com/200x200">
+					<br>
+					Ninth
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}

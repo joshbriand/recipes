@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+	<div class="container text-center">
+		<div class="row">
+			<h1>Add Recipe</h1>
+		</div>
+		<br>
+		<form method="POST">
+			<div class="row">
+				Cuisine:
+				<select name="cuisine">
+					<option value="{{ cuisine }}">{{ cuisine }}</option>
+					<option value="American">American</option>
+					<option value="German">German</option>
+					<option value="Indian">Indian</option>
+					<option value="Mexican">Mexican</option>
+					<option value="Middle Eastern">Middle Eastern</option>
+					<option value="Vegan">Vegan</option>
+				</select>
+			</div>
+			<br>
+			<div class="row">
+				Meal:
+				<select name="meal">
+					<option value="{{ meal }}">{{ meal }}</option>
+					<option value="Appetizer">Appetizer</option>
+					<option value="Breakfast">Breakfast</option>
+					<option value="Dessert">Dessert</option>
+					<option value="Dinner">Dinner</option>
+					<option value="Drink">Drink</option>
+					<option value="Lunch">Lunch</option>
+					<option value="Salad">Salad</option>
+					<option value="Side">Side</option>
+					<option value="Snack">Snack</option>
+				</select>
+			</div>
+			<br>
+			<div class="row">
+				Recipe Name:
+				<input type="text" name="name" value="{{ name }}">
+			</div>
+			<br>
+			<div class="row">
+				Ingredients (seperate ingredients by pressing enter):
+				<textarea name="ingredients">{{ ingredients }}</textarea>
+			</div>
+			<br>
+			<div class="row">
+				Process (seperate steps by pressing enter):
+				<textarea name="process">{{ process }}</textarea>
+			</div>
+			<br>
+			<div class="row">
+				Image URL:
+				<input type="text" name="picture" value="{{ picture }}">
+			</div>
+			<br>
+			<div class="row">
+				<input type="submit">
+				<input type="submit" value="Cancel">
+			</div>
+		</form>
+	</div>
+{% endblock %}
