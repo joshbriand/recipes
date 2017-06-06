@@ -10,15 +10,22 @@
 			</div>
 		</div>
 		<div class="row text-center">
-			# Likes
+			{{ likes | length }}
+			{% if likes | length == 1 %}
+				Like
+			{% else %}
+				Likes
+			{% endif %}
 		</div>
 		<div class="row text-center">
 			<h2>{{ recipe.cuisine }} - {{ recipe.meal }}</h2>
 		</div>
 		<div class="row text-center">
-			<a href="{{ url_for('editRecipe') }}">Edit</a>
+			<a href="{{ url_for('editRecipe', recipe_id=recipe.id) }}">Edit</a>
 			<a href="{{ url_for('deleteRecipe', recipe_id=recipe.id) }}">Delete</a>
-			<a href="">Like</a>
+			{% if liked == False %}
+				<a href="{{ url_for('likeRecipe', recipe_id=recipe.id) }}">Like</a>
+			{% endif %}
 		</div>
 		<hr>
 		<div class="row">

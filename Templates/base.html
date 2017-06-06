@@ -19,7 +19,7 @@
 				</div>
 				{% if 'username' in session %}
 					<div id="navigation" class="col-md-1">
-						<a href="{{ url_for('showRecipes') }}">My Recipes</a>
+						<a href="{{ url_for('showRecipes', user_id=session['user_id']) }}">My Recipes</a>
 						<!--Josh add get param-->
 					</div>
 					<div id="navigation" class="col-md-1">
@@ -78,7 +78,7 @@
 							}); } }
 						</script>
 					{% else %}
-						Logged in as {{ session['username']}}
+						Logged in as {{ session['username'] }}
 						<br>
 						<a href="{{ url_for('disconnect') }}">Log Out</a>
 					{% endif %}

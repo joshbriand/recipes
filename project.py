@@ -27,6 +27,8 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+cuisines = ["All", "American", "German", "Indian", "Japanese", "Mexican", "Middle Eastern", "Vegan"]
+meals = ["All", "Appetizer", "Breakfast", "Dessert", "Dinner", "Drink", "Lunch", "Salad", "Side", "Snack"]
 
 # Create anti-forgery state token
 def generateState():
@@ -175,20 +177,53 @@ def disconnect():
         return redirect(url_for('showRecipes'))
 
 #Show all recipes
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 @app.route('/recipes/', methods=['GET', 'POST'])
-def showRecipes():
+@app.route('/recipes/<int:user_id>', methods=['GET', 'POST'])
+def showRecipes(user_id=""):
+    cuisines[0] = "All"
+    meals[0] = "All"
     if request.method == 'POST':
-        pass
-    else:
         recipes = session.query(Recipe).order_by(Recipe.date)
+        cuisine = request.form['cuisine']
+        if cuisine != "All":
+            recipes = recipes.filter_by(cuisine=cuisine)
+        meal = request.form['meal']
+        if meal != "All":
+            recipes = recipes.filter_by(meal=meal)
+        userSelect = request.form['user']
+        if userSelect != "All":
+            userSelect = int(userSelect)
+            recipes = recipes.filter_by(user_id=userSelect)
+        order = request.form['order']
+        if order == "Newest":
+            recipes = recipes.order_by(Recipe.date.desc())
+        elif order == "Oldest":
+            recipes = recipes.order_by(Recipe.date.asc())
+        elif order == "Alphabetically by Name":
+            print "alpha"
+            recipes = recipes.order_by(Recipe.name)
+        elif order == "Alphabetically by Creator":
+            print "alpha"
+            recipes = recipes.order_by(Recipe.user)
         users = session.query(User).order_by(User.id)
-        return render_template('recipes.html', recipes=recipes, users=users)
-
+        return render_template('recipes.html', recipes=recipes, users=users, cuisine=cuisine, meal=meal, order=order, userSelect=userSelect, meals=meals, cuisines=cuisines)
+    else:
+        users = session.query(User).order_by(User.id)
+        if user_id == "":
+            print "no user id"
+            recipes = session.query(Recipe).order_by(Recipe.date.desc())
+            return render_template('recipes.html', recipes=recipes, users=users, meals=meals, cuisines=cuisines)
+        else:
+            print "user id"
+            recipes = session.query(Recipe).filter_by(user_id=user_id).order_by(Recipe.date.desc())
+            return render_template('recipes.html', recipes=recipes, users=users, userSelect=login_session['user_id'], meals=meals, cuisines=cuisines)
 
 #Create a recipe
 @app.route('/addrecipe/', methods=['GET', 'POST'])
 def addRecipe():
+    cuisines[0] = "Choose One"
+    meals[0] = "Choose One"
     if request.method == 'POST':
         error = ""
         if request.form['cuisine'] == "Choose One":
@@ -209,7 +244,7 @@ def addRecipe():
         date = datetime.datetime.now()
         if error != "":
             flash(error)
-            return render_template('addrecipe.html', name=name, ingredients=ingredients, process=process, picture=picture, cuisine=cuisine, meal=meal)
+            return render_template('addrecipe.html', name=name, ingredients=ingredients, process=process, picture=picture, cuisine=cuisine, meal=meal, meals=meals, cuisines=cuisines)
         newRecipe = Recipe(name=name, cuisine=cuisine, meal=meal, date=date, picture=picture, user_id=user_id)
         session.add(newRecipe)
         session.commit()
@@ -229,11 +264,7 @@ def addRecipe():
         if 'username' not in login_session:
             return redirect('/')
         else:
-            cuisine = "Choose One"
-            meal = "Choose One"
-            date = datetime.datetime.now()
-            print date
-            return render_template('addrecipe.html', meal=meal, cuisine=cuisine)
+            return render_template('addrecipe.html', meals=meals, cuisines=cuisines)
 
 
 #Show a recipe
@@ -244,7 +275,12 @@ def showRecipe(recipe_id):
         recipe = session.query(Recipe).filter_by(id=recipe_id).one()
         ingredients = session.query(Ingredient).filter_by(recipe_id=recipe_id).all()
         processes = session.query(Process).filter_by(recipe_id=recipe_id).all()
-        return render_template('recipe.html', recipe=recipe, ingredients=ingredients, processes=processes)
+        likes = session.query(Like).filter_by(recipe_id=recipe_id).all()
+        if likes:
+            liked = userLiked(likes)
+        else:
+            liked = False
+        return render_template('recipe.html', recipe=recipe, ingredients=ingredients, processes=processes, likes=likes, liked=liked, meals=meals, cuisines=cuisines)
     print "not ok"
     flash('Recipe does not exist')
     return redirect('/')
@@ -252,12 +288,81 @@ def showRecipe(recipe_id):
 
 
 #Edit a recipe
-@app.route('/editrecipe/')
-def editRecipe():
-    return render_template('editrecipe.html')
+@app.route('/recipe/<int:recipe_id>/edit/', methods=['GET', 'POST'])
+def editRecipe(recipe_id):
+    cuisines[0] = "Choose One"
+    meals[0] = "Choose One"
+    if recipeExists(recipe_id):
+        author = session.query(Recipe).filter_by(id=recipe_id).one().user
+        recipeToEdit = session.query(Recipe).filter_by(id=recipe_id).one()
+        oldIngredients = session.query(Ingredient).filter_by(recipe_id=recipe_id).all()
+        oldProcesses = session.query(Process).filter_by(recipe_id=recipe_id).all()
+        if 'username' in login_session:
+            if author.id == login_session['user_id']:
+                if request.method == "POST":
+                    error = ""
+                    if request.form['cuisine'] == "Choose One":
+                        error = "You must choose a cuisine type!"
+                    elif request.form['meal'] == "Choose One":
+                        error = "You must choose a meal type!"
+                    #flash
+                    #error and rerender
+                    cuisine = request.form['cuisine']
+                    meal = request.form['meal']
+                    name = request.form['name']
+                    ingredients = request.form['ingredients']
+                    ingredientList = ingredients.split("\n")
+                    process = request.form['process']
+                    processList = process.split("\n")
+                    picture = request.form['picture']
+                    user_id = login_session['user_id']
+                    date = datetime.datetime.now()
+                    if error != "":
+                        flash(error)
+                        return render_template('editrecipe.html', name=name, ingredients=ingredients, process=process, picture=picture, cuisine=cuisine, meal=meal, meals=meals, cuisines=cuisines)
+                    recipeToEdit .name = name
+                    recipeToEdit.cuisine = cuisine
+                    recipeToEdit.meal = meal
+                    recipeToEdit.date = date
+                    recipeToEdit.picture = picture
+                    session.add(recipeToEdit)
+                    session.commit()
+                    for ingredient in oldIngredients:
+                        session.delete(ingredient)
+                        session.commit()
+                    for ingredient in ingredientList:
+                        newIngredient = Ingredient(ingredient=ingredient, recipe_id=recipe_id)
+                        session.add(newIngredient)
+                        session.commit()
+                    for process in oldProcesses:
+                        session.delete(process)
+                        session.commit()
+                    for process in processList:
+                        newProcess = Process(process=process, recipe_id=recipe_id)
+                        session.add(newProcess)
+                        session.commit()
+                    flash('New Recipe %s Successfully Editted' % recipeToEdit.name)
+                    return redirect(url_for('showRecipe', recipe_id=recipe_id))
+                else:
+                    ingredientString = ""
+                    for ingredient in oldIngredients:
+                        print ingredient.ingredient
+                        ingredientString += ingredient.ingredient + "\n"
+                    processString = ""
+                    for process in oldProcesses:
+                        print process.process
+                        processString += process.process + "\n"
+                    return render_template('editrecipe.html', recipe=recipeToEdit, ingredientString=ingredientString, processString=processString, meals=meals, cuisines=cuisines)
+            else:
+                flash('You are not authorized to edit this recipe')
+        else:
+            flash('User not logged in')
+    else:
+        flash('Recipe does not exist')
+    return redirect('/')
 
 #Delete a recipe
-@app.route('/deleterecipe/<int:recipe_id>/', methods=['GET', 'POST'])
+@app.route('/recipe/<int:recipe_id>/delete/', methods=['GET', 'POST'])
 def deleteRecipe(recipe_id):
     if recipeExists(recipe_id):
         author = session.query(Recipe).filter_by(id=recipe_id).one().user
@@ -279,6 +384,29 @@ def deleteRecipe(recipe_id):
                 flash('You are not authorized to delete this recipe')
         else:
             flash('User not logged in')
+            return redirect('/recipe/', recipe_id=recipe_id)
+    else:
+        flash('Recipe does not exist')
+    return redirect('/')
+
+
+#Delete a recipe
+@app.route('/recipe/<int:recipe_id>/like/')
+def likeRecipe(recipe_id):
+    if recipeExists(recipe_id):
+        if 'username' in login_session:
+            likes = session.query(Like).filter_by(recipe_id=recipe_id).all()
+            if likes:
+                if userLiked(likes):
+                    flash('User has already liked this recipe')
+                    return redirect(url_for('showRecipe', recipe_id=recipe_id))
+            newLike = Like(user_id=login_session['user_id'], recipe_id=recipe_id)
+            session.add(newLike)
+            session.commit()
+            return redirect(url_for('showRecipe', recipe_id=recipe_id))
+        else:
+            flash('User not logged in')
+            return redirect(url_for('showRecipe', recipe_id=recipe_id))
     else:
         flash('Recipe does not exist')
     return redirect('/')
@@ -293,6 +421,14 @@ def addComment():
 def recipeExists(recipe_id):
     q = session.query(Recipe).filter_by(id=recipe_id)
     return session.query(q.exists()).scalar()
+
+def userLiked(likes):
+    for like in likes:
+        if login_session['user_id'] == like.user_id:
+            return True
+            break
+        else:
+            return False
 
 
 def createUser(login_session):
@@ -313,7 +449,7 @@ def getUserInfo(user_id):
 
 def getUserID(email):
     try:
-        user = session.query(User).filter_by(email = email).one()
+        user = session.query(User).filter_by(email=email).first()
         return user.id
     except:
         return None

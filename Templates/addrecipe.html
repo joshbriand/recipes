@@ -9,29 +9,18 @@
 			<div class="row">
 				Cuisine:
 				<select name="cuisine">
-					<option value="{{ cuisine }}">{{ cuisine }}</option>
-					<option value="American">American</option>
-					<option value="German">German</option>
-					<option value="Indian">Indian</option>
-					<option value="Mexican">Mexican</option>
-					<option value="Middle Eastern">Middle Eastern</option>
-					<option value="Vegan">Vegan</option>
+					{% for cuisineType in cuisines %}
+						<option value="{{ cuisineType }}" {% if cuisine == cuisineType %}Selected{% endif %}>{{ cuisineType }}</option>
+					{% endfor %}
 				</select>
 			</div>
 			<br>
 			<div class="row">
 				Meal:
 				<select name="meal">
-					<option value="{{ meal }}">{{ meal }}</option>
-					<option value="Appetizer">Appetizer</option>
-					<option value="Breakfast">Breakfast</option>
-					<option value="Dessert">Dessert</option>
-					<option value="Dinner">Dinner</option>
-					<option value="Drink">Drink</option>
-					<option value="Lunch">Lunch</option>
-					<option value="Salad">Salad</option>
-					<option value="Side">Side</option>
-					<option value="Snack">Snack</option>
+					{% for mealType in meals %}
+						<option value="{{ mealType }}" {% if meal == mealType %}Selected{% endif %}>{{ mealType }}</option>
+					{% endfor %}
 				</select>
 			</div>
 			<br>
