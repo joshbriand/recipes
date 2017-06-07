@@ -5,7 +5,7 @@ from database_setup import Base, User, Recipe, Comment, Like, Process, Ingredien
 from flask import session as login_session
 import random
 import string
-import datetime
+from datetime import datetime
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
 import httplib2
@@ -241,7 +241,7 @@ def addRecipe():
         processList = process.split("\n")
         picture = request.form['picture']
         user_id = login_session['user_id']
-        date = datetime.datetime.now()
+        date = datetime.now()
         if error != "":
             flash(error)
             return render_template('addrecipe.html', name=name, ingredients=ingredients, process=process, picture=picture, cuisine=cuisine, meal=meal, meals=meals, cuisines=cuisines)
@@ -276,11 +276,12 @@ def showRecipe(recipe_id):
         ingredients = session.query(Ingredient).filter_by(recipe_id=recipe_id).all()
         processes = session.query(Process).filter_by(recipe_id=recipe_id).all()
         likes = session.query(Like).filter_by(recipe_id=recipe_id).all()
+        comments = session.query(Comment).filter_by(recipe_id=recipe_id).all()
         if likes:
             liked = userLiked(likes)
         else:
             liked = False
-        return render_template('recipe.html', recipe=recipe, ingredients=ingredients, processes=processes, likes=likes, liked=liked, meals=meals, cuisines=cuisines)
+        return render_template('recipe.html', recipe=recipe, ingredients=ingredients, processes=processes, likes=likes, liked=liked, meals=meals, cuisines=cuisines, comments=comments)
     print "not ok"
     flash('Recipe does not exist')
     return redirect('/')
@@ -316,7 +317,7 @@ def editRecipe(recipe_id):
                     processList = process.split("\n")
                     picture = request.form['picture']
                     user_id = login_session['user_id']
-                    date = datetime.datetime.now()
+                    date = datetime.now()
                     if error != "":
                         flash(error)
                         return render_template('editrecipe.html', name=name, ingredients=ingredients, process=process, picture=picture, cuisine=cuisine, meal=meal, meals=meals, cuisines=cuisines)
@@ -413,13 +414,97 @@ def likeRecipe(recipe_id):
 
 
 #Add a comment
-@app.route('/addcomment/')
-def addComment():
-    return render_template('addcomment.html')
+@app.route('/recipe/<int:recipe_id>/addcomment/', methods=['GET', 'POST'])
+def addComment(recipe_id):
+    if request.method == 'POST':
+        if 'username' in login_session:
+            comment = request.form['comment']
+            if comment == "":
+                flash('You must enter a comment in order to submit one')
+                return render_template('addcomment.html')
+            else:
+                date = datetime.now()
+                newComment = Comment(comments=comment, recipe_id=recipe_id, user_id=login_session['user_id'], date=date)
+                session.add(newComment)
+                session.commit()
+                flash('Comment has been added')
+                return redirect(url_for('showRecipe', recipe_id=recipe_id))
+        else:
+            flash('User must be logged in to comment')
+            return render_template('addcomment.html')
+    else:
+        return render_template('addcomment.html')
+
+
+#Edit a comment
+@app.route('/recipe/<int:recipe_id>/editcomment/<int:comment_id>/', methods=['GET', 'POST'])
+def editComment(recipe_id, comment_id):
+    if commentExists(comment_id):
+        commentToEdit = session.query(Comment).filter_by(id=comment_id).one()
+        if request.method == 'POST':
+            author = session.query(Comment).filter_by(id=comment_id).one().user
+            if 'username' in login_session:
+                editComment = request.form['comment']
+                if author.id == login_session['user_id']:
+                    if editComment == "":
+                        flash('You must enter a comment in order to submit one')
+                        return render_template('editcomment.html', comment=commentToEdit)
+                    else:
+                        commentToEdit.comments = editComment
+                        date = datetime.now()
+                        commentToEdit.date = date
+                        session.add(commentToEdit)
+                        session.commit()
+                        flash('Comment has been editted')
+                        return redirect(url_for('showRecipe', recipe_id=recipe_id))
+                else:
+                    flash('You are not authorized to edit this comment')
+                    return redirect(url_for('showRecipe', recipe_id=recipe_id))
+            else:
+                flash('User must be logged in to comment')
+                return render_template('addcomment.html')
+        else:
+            return render_template('editcomment.html', comment=commentToEdit)
+    else:
+        flash('Comment does not exist')
+        return render_template('addcomment.html')
+
+
+#Delete a recipe
+@app.route('/recipe/<int:recipe_id>/deletecomment/<int:comment_id>/', methods=['GET', 'POST'])
+def deleteComment(recipe_id, comment_id):
+    if commentExists(comment_id):
+        author = session.query(Comment).filter_by(id=comment_id).one().user
+        commentToDelete = session.query(Comment).filter_by(id=comment_id).one()
+        if 'username' in login_session:
+            if author.id == login_session['user_id']:
+                if request.method == "POST":
+                    if request.form['delete'] == "Yes":
+                        session.delete(commentToDelete)
+                        session.commit()
+                        flash('Comment Successfully Deleted')
+                        return redirect(url_for('showRecipe', recipe_id=recipe_id))
+                    else:
+                        return redirect(url_for('showRecipe', recipe_id=recipe_id))
+                else:
+                    return render_template('deletecomment.html')
+            else:
+                flash('You are not authorized to delete this comment')
+                return redirect(url_for('showRecipe', recipe_id=recipe_id))
+        else:
+            flash('User not logged in')
+            return redirect(url_for('showRecipe', recipe_id=recipe_id))
+    else:
+        flash('Comment does not exist')
+    return redirect('/')
 
 
 def recipeExists(recipe_id):
     q = session.query(Recipe).filter_by(id=recipe_id)
+    return session.query(q.exists()).scalar()
+
+def commentExists(comment_id):
+    q = session.query(Comment).filter_by(id=comment_id)
     return session.query(q.exists()).scalar()
 
 def userLiked(likes):

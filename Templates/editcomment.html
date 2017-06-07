@@ -2,13 +2,13 @@
 {% block content %}
 	<div class="container text-center">
 		<div class="row">
-			<h1>Add a Comment</h1>
+			<h1>Edit a Comment</h1>
 		</div>
 		<br>
 		<form method="POST">
 			<div class="row">
 				Comment:
-				<textarea name="comment"></textarea>
+				<textarea name="comment">{{ comment.comments }}</textarea>
 			</div>
 			<br>
 			<div class="row">

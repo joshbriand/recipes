@@ -51,18 +51,32 @@
 			<h2>Comments</h2>
 		</div>
 		<div class="row text-center">
-			<a href="{{ url_for('addComment') }}">
+			<a href="{{ url_for('addComment', recipe_id=recipe.id) }}">
 				Add a Comment
 			</a>
 		</div>
-		<br>
+		<hr>
 		<div id="comments" class="row">
-			<div id="user" class="col-md-2">
-				Username
-			</div>
-			<div id="comment" class="col-md-10">
-				Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
-			</div>
+			{% if comments %}
+				{% for comment in comments %}
+					<div id="user" class="col-md-3 text-right">
+						{{ comment.user.name }}
+						{% if comment.user.name == session['username'] %}
+							<br>
+							<a href="{{ url_for('editComment', recipe_id=recipe.id, comment_id=comment.id) }}">Edit</a>
+							<a href="{{ url_for('deleteComment', recipe_id=recipe.id, comment_id=comment.id) }}">Delete</a>
+						{% endif %}
+					</div>
+					<div id="comment" class="col-md-9">
+						{{ comment.comments }}
+					</div>
+					<hr>
+				{% endfor %}
+			{% else %}
+				<div class="col-md-12 text-center">
+					No comments yet
+				</div>
+			{% endif %}
 		</div>
 	</div>
 {% endblock %}

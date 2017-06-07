@@ -29,7 +29,7 @@ class Recipe(Base):
     name = Column(String(250), nullable=False)
     cuisine = Column(String(250))
     meal = Column(String(250))
-    date = Column(DateTime) #change to PST
+    date = Column(DateTime)
     picture = Column(String(500))
     user_id = Column(Integer,ForeignKey('user.id'))
     user = relationship(User)
@@ -75,6 +75,7 @@ class Comment(Base):
     comments = Column(String(250), nullable=False)
     user_id = Column(Integer,ForeignKey('user.id'))
     user = relationship(User)
+    date = Column(DateTime)
     recipe_id = Column(Integer,ForeignKey('recipe.id'))
     recipe = relationship(Recipe)
 
