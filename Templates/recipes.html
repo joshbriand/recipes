@@ -30,7 +30,6 @@
 						<option value="Oldest" {% if order == "Oldest" %}Selected{% endif %}>Oldest First</option>
 						<option value="Popular" {% if order == "Popular" %}Selected{% endif %}>Most Popular First</option>
 						<option value="Alphabetically by Name" {% if order == "Alphabetically by Name" %}Selected{% endif %}>Alphabetically by Name</option>
-						<option value="Alphabetically by Creator" {% if order == "Alphabetically by Creator" %}Selected{% endif %}>Alphabetically by Creator</option>
 					</select>
 				</div>
 				<div class="col-md-3">
@@ -53,7 +52,7 @@
 			{% for recipe in recipes%}
 				<div class="col-md-4 recipe">
 					<a href="{{ url_for('showRecipe', recipe_id=recipe.id) }}">
-						<img src="{{ recipe.picture }}">
+						<img src="{{ recipe.picture }}" height="200px">
 						<br>
 						{{ recipe.name }}
 						<br>

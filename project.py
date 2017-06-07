@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, jsonify, url_for, flash
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
-from database_setup import Base, User, Recipe, Comment, Like, Process, Ingredient
+from database_setup import Base, User, Recipe, Comments, Like, Process, Ingredient
 from flask import session as login_session
 import random
 import string
@@ -43,7 +43,6 @@ def generateState():
 def gconnect():
     state = generateState()
     # Validate state token
-
     '''
     if request.args.get('state') != login_session['state']:
         response = make_response(simplejson.dumps('Invalid state parameter.'), 401)
@@ -183,8 +182,9 @@ def disconnect():
 def showRecipes(user_id=""):
     cuisines[0] = "All"
     meals[0] = "All"
+    likes = getOrderedLikes()
     if request.method == 'POST':
-        recipes = session.query(Recipe).order_by(Recipe.date)
+        recipes = session.query(Recipe)
         cuisine = request.form['cuisine']
         if cuisine != "All":
             recipes = recipes.filter_by(cuisine=cuisine)
@@ -201,11 +201,11 @@ def showRecipes(user_id=""):
         elif order == "Oldest":
             recipes = recipes.order_by(Recipe.date.asc())
         elif order == "Alphabetically by Name":
-            print "alpha"
-            recipes = recipes.order_by(Recipe.name)
-        elif order == "Alphabetically by Creator":
-            print "alpha"
-            recipes = recipes.order_by(Recipe.user)
+            print "alpha by name"
+            recipes = recipes.order_by(Recipe.name.asc())
+        elif order == "Popular":
+            print "most popular"
+            recipes = recipes.order_by(Recipe.name.asc())
         users = session.query(User).order_by(User.id)
         return render_template('recipes.html', recipes=recipes, users=users, cuisine=cuisine, meal=meal, order=order, userSelect=userSelect, meals=meals, cuisines=cuisines)
     else:
@@ -217,7 +217,7 @@ def showRecipes(user_id=""):
         else:
             print "user id"
             recipes = session.query(Recipe).filter_by(user_id=user_id).order_by(Recipe.date.desc())
-            return render_template('recipes.html', recipes=recipes, users=users, userSelect=login_session['user_id'], meals=meals, cuisines=cuisines)
+            return render_template('recipes.html', recipes=recipes, users=users, userSelect=user_id, meals=meals, cuisines=cuisines)
 
 #Create a recipe
 @app.route('/addrecipe/', methods=['GET', 'POST'])
@@ -276,8 +276,9 @@ def showRecipe(recipe_id):
         ingredients = session.query(Ingredient).filter_by(recipe_id=recipe_id).all()
         processes = session.query(Process).filter_by(recipe_id=recipe_id).all()
         likes = session.query(Like).filter_by(recipe_id=recipe_id).all()
-        comments = session.query(Comment).filter_by(recipe_id=recipe_id).all()
+        comments = session.query(Comments).filter_by(recipe_id=recipe_id).all()
         if likes:
+            print "likes exist"
             liked = userLiked(likes)
         else:
             liked = False
@@ -368,6 +369,8 @@ def deleteRecipe(recipe_id):
     if recipeExists(recipe_id):
         author = session.query(Recipe).filter_by(id=recipe_id).one().user
         recipeToDelete = session.query(Recipe).filter_by(id=recipe_id).one()
+        likesToDelete = session.query(Like).filter_by(recipe_id=recipe_id)
+        commentsToDelete = session.query(Comments).filter_by(recipe_id=recipe_id)
         if 'username' in login_session:
             if author.id == login_session['user_id']:
                 if request.method == "POST":
@@ -375,6 +378,12 @@ def deleteRecipe(recipe_id):
                     if request.form['delete'] == "Yes":
                         session.delete(recipeToDelete)
                         session.commit()
+                        for likeToDelete in likesToDelete:
+                            session.delete(likeToDelete)
+                            session.commit()
+                        for commentToDelete in commentsToDelete:
+                            session.delete(commentToDelete)
+                            session.commit()
                         flash('Recipe Successfully Deleted')
                         return redirect('/')
                     else:
@@ -391,7 +400,7 @@ def deleteRecipe(recipe_id):
     return redirect('/')
 
 
-#Delete a recipe
+#Like a recipe
 @app.route('/recipe/<int:recipe_id>/like/')
 def likeRecipe(recipe_id):
     if recipeExists(recipe_id):
@@ -404,7 +413,32 @@ def likeRecipe(recipe_id):
             newLike = Like(user_id=login_session['user_id'], recipe_id=recipe_id)
             session.add(newLike)
             session.commit()
+            flash ('Recipe liked')
             return redirect(url_for('showRecipe', recipe_id=recipe_id))
+        else:
+            flash('User not logged in')
+            return redirect(url_for('showRecipe', recipe_id=recipe_id))
+    else:
+        flash('Recipe does not exist')
+    return redirect('/')
+
+
+#Unlike a recipe
+@app.route('/recipe/<int:recipe_id>/unlike/')
+def unlikeRecipe(recipe_id):
+    if recipeExists(recipe_id):
+        if 'username' in login_session:
+            likes = session.query(Like).filter_by(recipe_id=recipe_id).all()
+            if likes:
+                if userLiked(likes):
+                    likeToDelete = session.query(Like).filter_by(user_id=login_session['user_id'], recipe_id=recipe_id).first()
+                    session.delete(likeToDelete)
+                    session.commit()
+                    flash ('Recipe unliked')
+                    return redirect(url_for('showRecipe', recipe_id=recipe_id))
+                else:
+                    flash('User does not like this recipe')
+                    return redirect(url_for('showRecipe', recipe_id=recipe_id))
         else:
             flash('User not logged in')
             return redirect(url_for('showRecipe', recipe_id=recipe_id))
@@ -424,7 +458,7 @@ def addComment(recipe_id):
                 return render_template('addcomment.html')
             else:
                 date = datetime.now()
-                newComment = Comment(comments=comment, recipe_id=recipe_id, user_id=login_session['user_id'], date=date)
+                newComment = Comments(comment=comment, recipe_id=recipe_id, user_id=login_session['user_id'], date=date)
                 session.add(newComment)
                 session.commit()
                 flash('Comment has been added')
@@ -440,9 +474,9 @@ def addComment(recipe_id):
 @app.route('/recipe/<int:recipe_id>/editcomment/<int:comment_id>/', methods=['GET', 'POST'])
 def editComment(recipe_id, comment_id):
     if commentExists(comment_id):
-        commentToEdit = session.query(Comment).filter_by(id=comment_id).one()
+        commentToEdit = session.query(Comments).filter_by(id=comment_id).one()
         if request.method == 'POST':
-            author = session.query(Comment).filter_by(id=comment_id).one().user
+            author = session.query(Comments).filter_by(id=comment_id).one().user
             if 'username' in login_session:
                 editComment = request.form['comment']
                 if author.id == login_session['user_id']:
@@ -450,7 +484,7 @@ def editComment(recipe_id, comment_id):
                         flash('You must enter a comment in order to submit one')
                         return render_template('editcomment.html', comment=commentToEdit)
                     else:
-                        commentToEdit.comments = editComment
+                        commentToEdit.comment = editComment
                         date = datetime.now()
                         commentToEdit.date = date
                         session.add(commentToEdit)
@@ -474,8 +508,8 @@ def editComment(recipe_id, comment_id):
 @app.route('/recipe/<int:recipe_id>/deletecomment/<int:comment_id>/', methods=['GET', 'POST'])
 def deleteComment(recipe_id, comment_id):
     if commentExists(comment_id):
-        author = session.query(Comment).filter_by(id=comment_id).one().user
-        commentToDelete = session.query(Comment).filter_by(id=comment_id).one()
+        author = session.query(Comments).filter_by(id=comment_id).one().user
+        commentToDelete = session.query(Comments).filter_by(id=comment_id).one()
         if 'username' in login_session:
             if author.id == login_session['user_id']:
                 if request.method == "POST":
@@ -504,17 +538,24 @@ def recipeExists(recipe_id):
     return session.query(q.exists()).scalar()
 
 def commentExists(comment_id):
-    q = session.query(Comment).filter_by(id=comment_id)
+    q = session.query(Comments).filter_by(id=comment_id)
     return session.query(q.exists()).scalar()
 
 def userLiked(likes):
     for like in likes:
         if login_session['user_id'] == like.user_id:
             return True
-            break
-        else:
-            return False
+    return False
 
+def getOrderedLikes():
+    likeDict = {}
+    recipes = session.query(Recipe)
+    for recipe in recipes:
+        likeDict[recipe.id] = 0
+    likes = session.query(Like)
+    for like in likes:
+        likeDict[like.recipe_id] += 1
+    return likeDict
 
 def createUser(login_session):
     newUser = User(name = login_session['username'], email =

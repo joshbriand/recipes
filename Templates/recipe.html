@@ -3,7 +3,7 @@
 	<div class="container">
 		<div class="row text-center">
 			<div class="col-md-3">
-				<img src="{{ recipe.picture }}">
+				<img src="{{ recipe.picture }}" height="200px">
 			</div>
 			<div class="col-md-6">
 				<h1>{{ recipe.name }}</h1>
@@ -25,6 +25,8 @@
 			<a href="{{ url_for('deleteRecipe', recipe_id=recipe.id) }}">Delete</a>
 			{% if liked == False %}
 				<a href="{{ url_for('likeRecipe', recipe_id=recipe.id) }}">Like</a>
+			{% elif liked == True %}
+				<a href="{{ url_for('unlikeRecipe', recipe_id=recipe.id) }}">Unlike</a>
 			{% endif %}
 		</div>
 		<hr>
@@ -68,7 +70,7 @@
 						{% endif %}
 					</div>
 					<div id="comment" class="col-md-9">
-						{{ comment.comments }}
+						{{ comment.comment }}
 					</div>
 					<hr>
 				{% endfor %}

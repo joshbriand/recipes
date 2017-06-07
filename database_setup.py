@@ -68,11 +68,11 @@ class Process(Base):
     process = Column(String(1000))
 
 
-class Comment(Base):
-    __tablename__ = 'comment'
+class Comments(Base):
+    __tablename__ = 'comments'
 
     id = Column(Integer, primary_key=True)
-    comments = Column(String(250), nullable=False)
+    comment = Column(String(250), nullable=False)
     user_id = Column(Integer,ForeignKey('user.id'))
     user = relationship(User)
     date = Column(DateTime)
