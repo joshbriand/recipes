@@ -35,21 +35,20 @@ def generateState():
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
                     for x in xrange(32))
     login_session['state'] = state
-    # return "The current session state is %s" % login_session['state']
     return state
 
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
-    state = generateState()
-    # Validate state token
-    '''
+
     if request.args.get('state') != login_session['state']:
         response = make_response(simplejson.dumps('Invalid state parameter.'), 401)
         response.headers['Content-Type'] = 'application/simplejson'
+        print "get %s " % request.args.get('state')
+        print "session %s " % login_session['state']
         print "error 1"
         return response
-    '''
+
     # Obtain authorization code
     code = request.data
     try:
@@ -182,7 +181,7 @@ def disconnect():
 def showRecipes(user_id=""):
     cuisines[0] = "All"
     meals[0] = "All"
-    likes = getOrderedLikes()
+    likeOrder = ""
     if request.method == 'POST':
         recipes = session.query(Recipe)
         cuisine = request.form['cuisine']
@@ -205,19 +204,22 @@ def showRecipes(user_id=""):
             recipes = recipes.order_by(Recipe.name.asc())
         elif order == "Popular":
             print "most popular"
-            recipes = recipes.order_by(Recipe.name.asc())
+            likeOrder = getOrderedLikes()
+        print "Like order %s" % likeOrder
         users = session.query(User).order_by(User.id)
-        return render_template('recipes.html', recipes=recipes, users=users, cuisine=cuisine, meal=meal, order=order, userSelect=userSelect, meals=meals, cuisines=cuisines)
+        return render_template('recipes.html', recipes=recipes, users=users, cuisine=cuisine, meal=meal, order=order, userSelect=userSelect, meals=meals, cuisines=cuisines, likeOrder=likeOrder)
     else:
+        state = generateState()
+        login_session['state'] = state
         users = session.query(User).order_by(User.id)
         if user_id == "":
             print "no user id"
             recipes = session.query(Recipe).order_by(Recipe.date.desc())
-            return render_template('recipes.html', recipes=recipes, users=users, meals=meals, cuisines=cuisines)
+            return render_template('recipes.html', recipes=recipes, users=users, meals=meals, cuisines=cuisines, STATE=state, likeOrder=likeOrder)
         else:
             print "user id"
             recipes = session.query(Recipe).filter_by(user_id=user_id).order_by(Recipe.date.desc())
-            return render_template('recipes.html', recipes=recipes, users=users, userSelect=user_id, meals=meals, cuisines=cuisines)
+            return render_template('recipes.html', recipes=recipes, users=users, userSelect=user_id, meals=meals, cuisines=cuisines, STATE=state, likeOrder=likeOrder)
 
 #Create a recipe
 @app.route('/addrecipe/', methods=['GET', 'POST'])
@@ -240,6 +242,8 @@ def addRecipe():
         process = request.form['process']
         processList = process.split("\n")
         picture = request.form['picture']
+        if picture == "":
+            picture = "http://via.placeholder.com/200x200"
         user_id = login_session['user_id']
         date = datetime.now()
         if error != "":
@@ -262,6 +266,7 @@ def addRecipe():
         #return to recipe (no s!)
     else:
         if 'username' not in login_session:
+            flash('User not logged in')
             return redirect('/')
         else:
             return render_template('addrecipe.html', meals=meals, cuisines=cuisines)
@@ -276,13 +281,15 @@ def showRecipe(recipe_id):
         ingredients = session.query(Ingredient).filter_by(recipe_id=recipe_id).all()
         processes = session.query(Process).filter_by(recipe_id=recipe_id).all()
         likes = session.query(Like).filter_by(recipe_id=recipe_id).all()
-        comments = session.query(Comments).filter_by(recipe_id=recipe_id).all()
-        if likes:
-            print "likes exist"
-            liked = userLiked(likes)
-        else:
-            liked = False
-        return render_template('recipe.html', recipe=recipe, ingredients=ingredients, processes=processes, likes=likes, liked=liked, meals=meals, cuisines=cuisines, comments=comments)
+        comments = session.query(Comments).filter_by(recipe_id=recipe_id).order_by(Comments.id.desc()).all()
+        liked = False
+        if 'username' in login_session:
+            if likes:
+                print "likes exist"
+                liked = userLiked(likes)
+        state = generateState()
+        login_session['state'] = state
+        return render_template('recipe.html', recipe=recipe, ingredients=ingredients, processes=processes, likes=likes, liked=liked, meals=meals, cuisines=cuisines, comments=comments, STATE=state)
     print "not ok"
     flash('Recipe does not exist')
     return redirect('/')
@@ -357,8 +364,10 @@ def editRecipe(recipe_id):
                     return render_template('editrecipe.html', recipe=recipeToEdit, ingredientString=ingredientString, processString=processString, meals=meals, cuisines=cuisines)
             else:
                 flash('You are not authorized to edit this recipe')
+                return redirect(url_for('showRecipe', recipe_id=recipe_id))
         else:
             flash('User not logged in')
+            return redirect(url_for('showRecipe', recipe_id=recipe_id))
     else:
         flash('Recipe does not exist')
     return redirect('/')
@@ -392,12 +401,13 @@ def deleteRecipe(recipe_id):
                     return render_template('deleterecipe.html', recipe=recipeToDelete)
             else:
                 flash('You are not authorized to delete this recipe')
+                return redirect(url_for('showRecipe', recipe_id=recipe_id))
         else:
             flash('User not logged in')
-            return redirect('/recipe/', recipe_id=recipe_id)
+            return redirect(url_for('showRecipe', recipe_id=recipe_id))
     else:
         flash('Recipe does not exist')
-    return redirect('/')
+        return redirect('/')
 
 
 #Like a recipe
@@ -495,7 +505,7 @@ def editComment(recipe_id, comment_id):
                     flash('You are not authorized to edit this comment')
                     return redirect(url_for('showRecipe', recipe_id=recipe_id))
             else:
-                flash('User must be logged in to comment')
+                flash('User not logged in')
                 return render_template('addcomment.html')
         else:
             return render_template('editcomment.html', comment=commentToEdit)
@@ -555,7 +565,8 @@ def getOrderedLikes():
     likes = session.query(Like)
     for like in likes:
         likeDict[like.recipe_id] += 1
-    return likeDict
+    likeList = sorted(likeDict, key=lambda k: likeDict[k], reverse=True)
+    return likeList
 
 def createUser(login_session):
     newUser = User(name = login_session['username'], email =
@@ -583,4 +594,4 @@ def getUserID(email):
 if __name__ == '__main__':
     app.secret_key = 'super_secret_key'
     app.debug = True
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=8000)

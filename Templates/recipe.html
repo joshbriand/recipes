@@ -1,67 +1,75 @@
 {% extends "base.html" %}
 {% block content %}
-	<div class="container">
-		<div class="row text-center">
-			<div class="col-md-3">
-				<img src="{{ recipe.picture }}" height="200px">
-			</div>
-			<div class="col-md-6">
-				<h1>{{ recipe.name }}</h1>
-			</div>
+	<div class="row text-center">
+		<div class="col-md-3">
+			<img src="{{ recipe.picture }}" id="sub">
 		</div>
-		<div class="row text-center">
+		<div class="col-md-6" id="sub">
+			<h1>{{ recipe.name }}</h1>
 			{{ likes | length }}
 			{% if likes | length == 1 %}
 				Like
 			{% else %}
 				Likes
 			{% endif %}
-		</div>
-		<div class="row text-center">
 			<h2>{{ recipe.cuisine }} - {{ recipe.meal }}</h2>
-		</div>
-		<div class="row text-center">
-			<a href="{{ url_for('editRecipe', recipe_id=recipe.id) }}">Edit</a>
-			<a href="{{ url_for('deleteRecipe', recipe_id=recipe.id) }}">Delete</a>
-			{% if liked == False %}
+			{% if session['user_id'] == recipe.user_id %}
+				<a href="{{ url_for('editRecipe', recipe_id=recipe.id) }}">Edit</a>
+				<a href="{{ url_for('deleteRecipe', recipe_id=recipe.id) }}">Delete</a>
+			{% endif %}
+			{% if liked == False and 'username' in session %}
 				<a href="{{ url_for('likeRecipe', recipe_id=recipe.id) }}">Like</a>
 			{% elif liked == True %}
 				<a href="{{ url_for('unlikeRecipe', recipe_id=recipe.id) }}">Unlike</a>
 			{% endif %}
 		</div>
-		<hr>
-		<div class="row">
-			<div id="ingredients" class="col-md-4">
-				<h3 class="text-center">Ingredients</h3>
-				<ul>
-					{% for ingredient in ingredients %}
-						<li>{{ ingredient.ingredient }}</li>
-					{% endfor %}
-				</ul>
-			</div>
-			<div id="method" class="col-md-8">
-				<h3 class="text-center">Method</h3>
-				<ol>
-					{% for process in processes %}
-						<li>{{ process.process }}</li>
-					{% endfor %}
-				</ol>
-			</div>
+	</div>
+	<hr>
+	<div class="row">
+		<div class="col-md-1">
 		</div>
-		<hr>
-		<div class="row text-center">
-			<h2>Comments</h2>
+		<div id="sub" class="col-md-3">
+			<h3 class="text-center">Ingredients</h3>
+			<ul>
+				{% for ingredient in ingredients %}
+					<li>{{ ingredient.ingredient }}</li>
+				{% endfor %}
+			</ul>
 		</div>
-		<div class="row text-center">
-			<a href="{{ url_for('addComment', recipe_id=recipe.id) }}">
-				Add a Comment
-			</a>
+		<div class="col-md-1">
 		</div>
-		<hr>
-		<div id="comments" class="row">
-			{% if comments %}
-				{% for comment in comments %}
-					<div id="user" class="col-md-3 text-right">
+		<div id="sub" class="col-md-6">
+			<h3 class="text-center">Method</h3>
+			<ol>
+				{% for process in processes %}
+					<li>{{ process.process }}</li>
+				{% endfor %}
+			</ol>
+		</div>
+		<div class="col-md-1">
+		</div>
+	</div>
+	<hr>
+	<div class="row text-center">
+		<div class="col-md-4">
+		</div>
+		<div class="col-md-4" id="sub">
+			<h3>Comments</h3>
+			{% if 'username' in session %}
+				<a href="{{ url_for('addComment', recipe_id=recipe.id) }}">
+					Add a Comment
+				</a>
+			{% endif %}
+		</div>
+	</div>
+	<hr>
+	<div id="comments" class="row">
+		{% if comments %}
+			{% for comment in comments %}
+				<div class="row">
+					<div class="col-md-2">
+					</div>
+					<div id="sub" class="col-md-2">
 						{{ comment.user.name }}
 						{% if comment.user.name == session['username'] %}
 							<br>
@@ -69,16 +77,19 @@
 							<a href="{{ url_for('deleteComment', recipe_id=recipe.id, comment_id=comment.id) }}">Delete</a>
 						{% endif %}
 					</div>
-					<div id="comment" class="col-md-9">
+					<div id="sub" class="col-md-6">
 						{{ comment.comment }}
+						<br>
+						<i>Posted on {{ comment.date }}</i>
 					</div>
-					<hr>
-				{% endfor %}
-			{% else %}
-				<div class="col-md-12 text-center">
-					No comments yet
+					<div class="col-md-2">
+					</div>
 				</div>
-			{% endif %}
-		</div>
+			{% endfor %}
+		{% else %}
+			<div class="col-md-12 text-center">
+				No comments yet
+			</div>
+		{% endif %}
 	</div>
 {% endblock %}
