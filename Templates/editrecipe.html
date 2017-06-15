@@ -1,56 +1,56 @@
 {% extends "base.html" %}
 {% block content %}
-	<div class="col-md-3">
-	</div>
-	<div class="col-md-6 text-center" id="sub">
-		<div class="row">
-			<h1>Edit Recipe</h1>
-		</div>
-		<br>
-		<form method="POST">
-			<div class="row">
-				Cuisine:
-				<select name="cuisine">
-					{% for cuisineType in cuisines %}
-						<option value="{{ cuisineType }}" {% if recipe.cuisine == cuisineType %}Selected{% endif %}>{{ cuisineType }}</option>
-					{% endfor %}
-				</select>
-			</div>
-			<br>
-			<div class="row">
-				Meal:
-				<select name="meal">
-					{% for mealType in meals %}
-						<option value="{{ mealType }}" {% if recipe.meal == mealType %}Selected{% endif %}>{{ mealType }}</option>
-					{% endfor %}
-				</select>
-			</div>
-			<br>
-			<div class="row">
-				Recipe Name:
-				<input type="text" name="name" value="{{ recipe.name }}">
-			</div>
-			<br>
-			<div class="row">
-				Ingredients (seperate ingredients by pressing enter):
-				<textarea name="ingredients">{{ ingredientString }}</textarea>
-			</div>
-			<br>
-			<div class="row">
-				Process (seperate steps by pressing enter):
-				<textarea name="process">{{ processString }}</textarea>
-			</div>
-			<br>
-			<div class="row">
-				Image URL:
-				<input type="text" name="picture" value="{{ recipe.picture }}">
-			</div>
-			<br>
-			<div class="row">
-				<input type="submit">
-				<input type="submit" value="Cancel">
-				<br><br>
-			</div>
-		</form>
-	</div>
+    <div class="col-md-3">
+    </div>
+    <div class="col-md-6 text-center" id="sub">
+        <div class="row">
+            <h1>Edit Recipe</h1>
+        </div>
+        <br>
+        <form method="POST">
+            <div class="row">
+                Cuisine:
+                <select name="cuisine">
+                    {% for cuisineType in cuisines %}
+                        <option value="{{ cuisineType }}"{% if recipe.cuisine == cuisineType %}Selected{% endif %}>{{ cuisineType }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <br>
+            <div class="row">
+                Meal:
+                <select name="meal">
+                    {% for mealType in meals %}
+                        <option value="{{ mealType }}" {% if recipe.meal == mealType %}Selected{% endif %}>{{ mealType }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <br>
+            <div class="row">
+                Recipe Name:
+                <input type="text" name="name" value="{{ recipe.name }}">
+            </div>
+            <br>
+            <div class="row">
+                Ingredients(seperate ingredients by pressing enter):
+                <textarea name="ingredients">{{ ingredientString }}</textarea>
+            </div>
+            <br>
+            <div class="row">
+                Process(seperate steps by pressing enter):
+                <textarea name="process">{{ processString }}</textarea>
+            </div>
+            <br>
+            <div class="row">
+                Image URL:
+                <input type="text" name="picture" value="{{ recipe.picture }}">
+            </div>
+            <br>
+            <div class="row">
+                <input type="submit">
+                <input type="submit" value="Cancel">
+                <br><br>
+            </div>
+        </form>
+    </div>
 {% endblock %}

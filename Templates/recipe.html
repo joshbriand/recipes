@@ -1,95 +1,102 @@
 {% extends "base.html" %}
 {% block content %}
-	<div class="row text-center">
-		<div class="col-md-3">
-			<img src="{{ recipe.picture }}" id="sub">
-		</div>
-		<div class="col-md-6" id="sub">
-			<h1>{{ recipe.name }}</h1>
-			{{ likes | length }}
-			{% if likes | length == 1 %}
-				Like
-			{% else %}
-				Likes
-			{% endif %}
-			<h2>{{ recipe.cuisine }} - {{ recipe.meal }}</h2>
-			{% if session['user_id'] == recipe.user_id %}
-				<a href="{{ url_for('editRecipe', recipe_id=recipe.id) }}">Edit</a>
-				<a href="{{ url_for('deleteRecipe', recipe_id=recipe.id) }}">Delete</a>
-			{% endif %}
-			{% if liked == False and 'username' in session %}
-				<a href="{{ url_for('likeRecipe', recipe_id=recipe.id) }}">Like</a>
-			{% elif liked == True %}
-				<a href="{{ url_for('unlikeRecipe', recipe_id=recipe.id) }}">Unlike</a>
-			{% endif %}
-		</div>
-	</div>
-	<hr>
-	<div class="row">
-		<div class="col-md-1">
-		</div>
-		<div id="sub" class="col-md-3">
-			<h3 class="text-center">Ingredients</h3>
-			<ul>
-				{% for ingredient in ingredients %}
-					<li>{{ ingredient.ingredient }}</li>
-				{% endfor %}
-			</ul>
-		</div>
-		<div class="col-md-1">
-		</div>
-		<div id="sub" class="col-md-6">
-			<h3 class="text-center">Method</h3>
-			<ol>
-				{% for process in processes %}
-					<li>{{ process.process }}</li>
-				{% endfor %}
-			</ol>
-		</div>
-		<div class="col-md-1">
-		</div>
-	</div>
-	<hr>
-	<div class="row text-center">
-		<div class="col-md-4">
-		</div>
-		<div class="col-md-4" id="sub">
-			<h3>Comments</h3>
-			{% if 'username' in session %}
-				<a href="{{ url_for('addComment', recipe_id=recipe.id) }}">
-					Add a Comment
-				</a>
-			{% endif %}
-		</div>
-	</div>
-	<hr>
-	<div id="comments" class="row">
-		{% if comments %}
-			{% for comment in comments %}
-				<div class="row">
-					<div class="col-md-2">
-					</div>
-					<div id="sub" class="col-md-2">
-						{{ comment.user.name }}
-						{% if comment.user.name == session['username'] %}
-							<br>
-							<a href="{{ url_for('editComment', recipe_id=recipe.id, comment_id=comment.id) }}">Edit</a>
-							<a href="{{ url_for('deleteComment', recipe_id=recipe.id, comment_id=comment.id) }}">Delete</a>
-						{% endif %}
-					</div>
-					<div id="sub" class="col-md-6">
-						{{ comment.comment }}
-						<br>
-						<i>Posted on {{ comment.date }}</i>
-					</div>
-					<div class="col-md-2">
-					</div>
-				</div>
-			{% endfor %}
-		{% else %}
-			<div class="col-md-12 text-center">
-				No comments yet
-			</div>
-		{% endif %}
-	</div>
+    <div class="row text-center">
+        <div class="col-md-3">
+            <img src="{{ recipe.picture }}" id="sub">
+        </div>
+        <div class="col-md-6" id="sub">
+            <h1>{{ recipe.name }}</h1>
+            {{ likes|length }}
+            <!--Ensures that 'like' is displayed is there is 1 like and 'likes' if 0
+            or 2 or more likes'-->
+            {% if likes|length == 1 %}
+                Like
+            {% else %}
+                Likes
+            {% endif %}
+            <h2>{{ recipe.cuisine }} - {{ recipe.meal }}</h2>
+            <!--Displays options of editing and deleting if user is author -->
+            {% if session['user_id'] == recipe.user_id %}
+                <a href="{{ url_for('editRecipe', recipe_id=recipe.id) }}">Edit</a>
+                <a href="{{ url_for('deleteRecipe', recipe_id=recipe.id) }}">Delete</a>
+            {% endif %}
+            <!--Checks to see if user has already liked recipe, displays unlike option
+            if user has liked recipe already, like option if not-->
+            {% if liked == False and 'username' in session %}
+                <a href="{{ url_for('likeRecipe', recipe_id=recipe.id) }}">Like</a>
+            {% elif liked == True %}
+                <a href="{{ url_for('unlikeRecipe', recipe_id=recipe.id) }}">Unlike</a>
+            {% endif %}
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div id="sub" class="col-md-3">
+            <h3 class="text-center">Ingredients</h3>
+            <ul>
+                {% for ingredient in ingredients %}
+                    <li>{{ ingredient.ingredient }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="col-md-1">
+        </div>
+        <div id="sub" class="col-md-6">
+            <h3 class="text-center">Method</h3>
+            <ol>
+                {% for process in processes %}
+                    <li>{{ process.process }}</li>
+                {% endfor %}
+            </ol>
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+    <hr>
+    <div class="row text-center">
+        <div class="col-md-4">
+        </div>
+        <div class="col-md-4" id="sub">
+            <h3>Comments</h3>
+            {% if 'username' in session %}
+                <a href="{{ url_for('addComment', recipe_id=recipe.id) }}">
+                    Add a Comment
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    <hr>
+    <div id="comments" class="row">
+        {% if comments %}
+            {% for comment in comments %}
+                <div class="row">
+                    <div class="col-md-2">
+                    </div>
+                    <div id="sub" class="col-md-2">
+                        {{ comment.user.name }}
+                        <!--Displays options of editing and deleting if user is author of
+                        comment -->
+                        {% if comment.user.name == session['username'] %}
+                            <br>
+                            <a href="{{ url_for('editComment', recipe_id=recipe.id, comment_id=comment.id) }}">Edit</a>
+                            <a href="{{ url_for('deleteComment', recipe_id=recipe.id, comment_id=comment.id) }}">Delete</a>
+                        {% endif %}
+                    </div>
+                    <div id="sub" class="col-md-6">
+                        {{ comment.comment }}
+                        <br>
+                        <i>Posted on {{ comment.date }}</i>
+                    </div>
+                    <div class="col-md-2">
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-md-12 text-center">
+                No comments yet
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}
