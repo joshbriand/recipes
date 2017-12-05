@@ -2,6 +2,7 @@ from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
+import psycopg2
 
 Base = declarative_base()
 
@@ -93,6 +94,6 @@ class Like(Base):
     recipe = relationship(Recipe)
 
 
-engine = create_engine("sqlite:////var/www/recipes/recipes/recipeindex.db")
+engine = create_engine('postgresql://ubuntu:thankyou@localhost/recipeproject')
 
 Base.metadata.create_all(engine)

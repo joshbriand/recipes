@@ -21,7 +21,7 @@ CLIENT_ID = json.loads(
     open('/var/www/recipes/recipes/google_client_secrets.json', 'r').read())['web']['client_id']
 APPLICATION_NAME = "Recipe Application"
 
-engine = create_engine('postgresql://ubuntu:thankyou@localhost/recipeproject')
+engine = create_engine('postgresql://ubuntu:thankyou@localhost/recipeindex')
 
 Base.metadata.bind = engine
 
@@ -494,6 +494,8 @@ def deleteRecipe(recipe_id):
                         for processToDelete in processesToDelete:
                             session.delete(processToDelete)
                             session.commit()
+			session.delete(recipeToDelete)
+                        session.commit()
                         for likeToDelete in likesToDelete:
                             session.delete(likeToDelete)
                             session.commit()
@@ -503,8 +505,6 @@ def deleteRecipe(recipe_id):
                         for ingredientToDelete in ingredientsToDelete:
                             session.delete(ingredientToDelete)
                             session.commit()
-			session.delete(recipeToDelete)
-                        session.commit()
                         flash('Recipe Successfully Deleted')
                         return redirect('/')
                     else:
